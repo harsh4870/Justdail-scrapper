@@ -1,15 +1,24 @@
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--url', help='Enter the url you want to scrape')
+parser.add_argument('--file', help='Specify the file name', default="export.csv")
+args = parser.parse_args()
+
 from bs4 import BeautifulSoup
 import urllib
 import urllib.request
 import requests
 import csv
+import os
+import time
 
 
 def innerHTML(element):
     return element.decode_contents(formatter="html")
 
 def get_name(body):
-	return body.find('span', {'class':'jcn'}).a.string
+	return body.find('span', {'class':'jcn'}).a.attrs['title']
 
 def which_digit(html):
     mappingDict={'icon-ji':9,
@@ -92,17 +101,18 @@ service_count = 1
 
 
 fields = ['Name', 'Phone', 'Rating', 'Rating Count', 'Address', 'Location']
-out_file = open('hardware.csv','w')
+out_file = open(args.file,'w')
 csvwriter = csv.DictWriter(out_file, delimiter=',', fieldnames=fields)
 
 # Write fields first
 #csvwriter.writerow(dict((fn,fn) for fn in fields))
 while True:
+	time.sleep(2)
 	# Check if reached end of result
 	if page_number > 50:
 		break
 
-	url="https://www.justdial.com/Rajkot/Hardware-Shops-in-Rajkot/nct-10243514/page-%s" % (page_number)
+	url="%s/page-%s" % (args.url, page_number)
 	print(url)
 	req = urllib.request.Request(url, headers={'User-Agent' : "Mozilla/5.0 (Windows NT 6.1; Win64; x64)"}) 
 	page = urllib.request.urlopen( req )
@@ -127,7 +137,7 @@ while True:
 			dict_service['Name'] = name
 		if phone != None:
 			print('getting phone number')
-			dict_service['Phone'] = phone
+			dict_service['Phone'] = '\'' + phone
 		if rating != None:
 			dict_service['Rating'] = rating
 		if count != None:
